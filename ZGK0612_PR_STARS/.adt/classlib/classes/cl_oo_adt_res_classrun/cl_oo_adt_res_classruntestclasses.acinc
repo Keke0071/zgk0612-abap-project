@@ -1,0 +1,573 @@
+CLASS ltcl_res_classrun DEFINITION FINAL FOR TESTING
+  DURATION SHORT
+  RISK LEVEL HARMLESS.
+
+  PRIVATE SECTION.
+    DATA out          TYPE xstring.
+    DATA resource     TYPE REF TO cl_adt_rest_resource.
+    DATA request_stub TYPE REF TO cl_adt_rest_request_stub.
+    DATA response_spy TYPE REF TO cl_adt_rest_response_spy.
+
+    METHODS main_method_called          FOR TESTING RAISING cx_static_check.
+    METHODS main_method_called_profiler FOR TESTING RAISING cx_static_check.
+    METHODS serialze_successfull        FOR TESTING RAISING cx_static_check.
+    METHODS read_data_from_ddls         FOR TESTING RAISING cx_static_check.
+    METHODS calls_sap_bc_adt_oo_classrun FOR TESTING RAISING cx_static_check.
+
+ENDCLASS.
+
+CLASS lcltd_classrun DEFINITION FINAL FOR TESTING DURATION SHORT RISK LEVEL HARMLESS.
+
+  PUBLIC SECTION.
+    INTERFACES if_oo_adt_classrun.
+
+    CONSTANTS co_class_name TYPE seoclsname VALUE 'LCLTD_CLASSRUN' ##NO_TEXT.
+    CONSTANTS co_ddl_name   TYPE seoclsname VALUE 'SDDIC_DDLS_VIEW_NAME' ##NO_TEXT.
+    CONSTANTS co_prog_name  TYPE string     VALUE 'DEMO_PROGRAM_READ_TABLES' ##NO_TEXT.
+    CONSTANTS co_testlinger TYPE string     VALUE 'TesTlinGer' ##NO_TEXT.
+
+ENDCLASS.
+
+
+
+CLASS lcl_profiler_helper DEFINITION.
+
+  PUBLIC SECTION.
+    CLASS-METHODS:
+      create_profiler_id
+        RETURNING VALUE(r_id) TYPE string,
+
+      delete_file
+        IMPORTING i_file TYPE REF TO if_atrapi_trace_file.
+
+ENDCLASS.
+
+
+
+CLASS lcltd_classrun IMPLEMENTATION.
+  METHOD if_oo_adt_classrun~main.
+    DATA output TYPE REF TO if_oo_adt_classrun_out ##NEEDED.
+
+    out->write( lcltd_classrun=>co_testlinger ).
+  ENDMETHOD.
+ENDCLASS.
+
+
+
+CLASS ltcl_res_classrun IMPLEMENTATION.
+
+
+  METHOD calls_sap_bc_adt_oo_classrun.
+    request_stub = new cl_adt_rest_request_stub( `/sap/bc/adt/oo/classrun` ).
+    request_stub->add_header_field( key   = if_http_header_fields=>accept
+                                    value = if_rest_media_type=>gc_text_plain ).
+
+    me->resource = NEW cl_oo_adt_res_classrun( ).
+
+    try.
+        resource->post( request = request_stub response = new cl_adt_rest_response_spy( ) ).
+        cl_abap_unit_assert=>fail( |Expected cx_adt_rest_parameter_not_fnd for post on /sap/bc/adt/oo/classrun| ).
+      catch cx_adt_rest_parameter_not_fnd.
+    endtry.
+
+  endmethod.
+
+
+  METHOD main_method_called.
+    request_stub = NEW #( ).
+    response_spy = NEW #( ).
+    me->resource = NEW cl_oo_adt_res_classrun( ).
+
+    " prepare the request's URI attributes
+    request_stub->set_uri_attribute( name = 'classname' value = lcltd_classrun=>co_class_name ).
+    request_stub->add_header_field( key   = if_http_header_fields=>accept
+                                    value = if_rest_media_type=>gc_text_plain ).
+
+    TRY.
+
+        TEST-INJECTION seo_class_all_implementg_get.
+          DATA ls_seorelkey TYPE seorelkey.
+          ls_seorelkey-clsname    = lcltd_classrun=>co_class_name.
+          ls_seorelkey-refclsname = 'IF_OO_ADT_CLASSRUN'.
+
+          APPEND ls_seorelkey TO lt_seor_implementing_keys.
+        END-TEST-INJECTION.
+
+        TEST-INJECTION abplngvs_is_user_authorized.
+          is_user_authorized = abap_true.
+        END-TEST-INJECTION.
+
+        TEST-INJECTION abplngvs_get_version_of_object.
+          ls_abap_language_version-id           = 'X'.
+          ls_abap_language_version-object_state = 'A'.
+        END-TEST-INJECTION.
+
+        " call the resource controller method
+        resource->post( request = request_stub response = response_spy ).
+
+      CATCH cx_adt_rest INTO DATA(cx).
+
+        RAISE EXCEPTION NEW cx_oo_adt_common( previous = cx ).
+
+    ENDTRY.
+
+    " verify the results
+    response_spy->get_body_data( IMPORTING data = out ).
+
+    cl_abap_unit_assert=>assert_text_matches(
+                                              " pattern          =     '^.*TesTlinGer.*$'
+                                              pattern = `TesTlinGer`
+                                              text    = cl_abap_codepage=>convert_from( out )
+                                              msg     = `Expected respone is not valid!`
+                                              level   = if_aunit_constants=>critical ).
+  ENDMETHOD.
+
+
+  METHOD serialze_successfull.
+    request_stub = NEW #( ).
+    response_spy = NEW #( ).
+    me->resource = NEW cl_oo_adt_res_classrun( ).
+
+    " prepare the request's URI attributes
+    request_stub->set_uri_attribute( name = 'classname' value = lcltd_classrun=>co_class_name ).
+    request_stub->add_header_field( key   = if_http_header_fields=>accept
+                                    value = if_rest_media_type=>gc_text_plain ).
+
+    TRY.
+        " call the resource controller method
+        resource->post( request = request_stub response = response_spy ).
+
+      CATCH cx_adt_rest INTO DATA(cx).
+
+        RAISE EXCEPTION NEW cx_oo_adt_common( previous = cx ).
+
+    ENDTRY.
+
+    DATA entity TYPE REF TO if_rest_entity.
+    entity = NEW cl_rest_entity( ).
+
+    DATA act_content_handler TYPE REF TO if_adt_rest_content_handler.
+    act_content_handler = response_spy->get_content_handler( ).
+
+    act_content_handler->serialize( data = out response_entity = entity ).
+
+    cl_abap_unit_assert=>assert_bound( msg = 'No content handler set in response' act = act_content_handler ).
+  ENDMETHOD.
+
+
+  METHOD read_data_from_ddls.
+    cl_abap_unit_assert=>skip( `DDLS is currently not supported` ).
+
+*    CREATE OBJECT request_stub.
+*    CREATE OBJECT response_spy.
+*    CREATE OBJECT me->resource TYPE cl_oo_adt_res_classrun.
+*
+**   prepare the request's URI attributes
+*    request_stub->set_uri_attribute( name = 'classname' value = lcltd_classrun=>co_ddl_name  ).
+*    request_stub->add_header_field(
+*      EXPORTING
+*        key   = if_http_header_fields=>accept
+*        value = if_rest_media_type=>gc_text_plain
+*    ).
+*
+*    TRY.
+**       call the resource controller method
+*        resource->post( request = request_stub response = response_spy ).
+*
+*      CATCH cx_adt_rest INTO DATA(cx).
+*
+*        RAISE EXCEPTION TYPE cx_oo_adt_common
+*          EXPORTING
+*            previous = cx.
+*
+*    ENDTRY.
+*
+**   verify the results
+*    response_spy->get_body_data( IMPORTING data = out ).
+*
+*    cl_abap_unit_assert=>assert_text_matches(
+*      EXPORTING
+*        pattern          =     '^.*STOB_NAME.*$'
+*        text             =     cl_abap_codepage=>convert_from( out )
+*        msg              =    |Expected respone is not valid!|
+*        level            =    if_aunit_constants=>critical
+*    ).
+  ENDMETHOD.
+
+
+  METHOD main_method_called_profiler.
+    request_stub = NEW #( ).
+    response_spy = NEW #( ).
+    me->resource = NEW cl_oo_adt_res_classrun( ).
+
+    " prepare the request's URI attributes
+    request_stub->set_uri_attribute( name = 'classname' value = lcltd_classrun=>co_class_name ).
+    request_stub->add_header_field( key   = if_http_header_fields=>accept
+                                    value = if_rest_media_type=>gc_text_plain ).
+
+    DATA(l_profiler_id) =
+      lcl_profiler_helper=>create_profiler_id( ).
+    request_stub->add_query_param( key   = 'profilerId'
+                                   value = l_profiler_id ).
+
+    TRY.
+
+        TEST-INJECTION seo_class_all_implementg_get.
+          DATA ls_seorel TYPE seorelkey.
+          ls_seorel-clsname    = lcltd_classrun=>co_class_name.
+          ls_seorel-refclsname = 'IF_OO_ADT_CLASSRUN'.
+
+          APPEND ls_seorel TO lt_seor_implementing_keys.
+        END-TEST-INJECTION.
+
+        TEST-INJECTION abplngvs_get_version_of_object.
+          ls_abap_language_version-id           = 'X'.
+          ls_abap_language_version-object_state = 'A'.
+        END-TEST-INJECTION.
+
+        TEST-INJECTION abplngvs_is_user_authorized.
+          is_user_authorized = abap_true.
+        END-TEST-INJECTION.
+
+        " call the resource controller method
+        resource->post( request = request_stub response = response_spy ).
+
+      CATCH cx_adt_rest INTO DATA(cx).
+
+        RAISE EXCEPTION NEW cx_oo_adt_common( previous = cx ).
+
+    ENDTRY.
+
+    " verify the results
+    response_spy->get_body_data( IMPORTING data = out ).
+
+    cl_abap_unit_assert=>assert_text_matches(
+                                              " pattern          =     '^.*TesTlinGer.*$'
+                                              pattern = `TesTlinGer`
+                                              text    = cl_abap_codepage=>convert_from( out )
+                                              msg     = `Expected respone is not valid!`
+                                              level   = if_aunit_constants=>critical ).
+
+    DATA(l_ref_file) =
+      cl_atradt_instant_tracing=>s_ref_trace_session->get_trace_file( ).
+
+    cl_abap_unit_assert=>assert_not_initial( act = l_ref_file
+                                             msg = `trace file is initial` ). " EC *
+
+    DATA(l_file_header) =
+      l_ref_file->get_file_header( ).
+    cl_abap_unit_assert=>assert_equals( act = l_file_header-aggregation
+                                        exp = 3
+                                        msg = `wrong aggregation kind in header` ). "#EC *
+
+    DATA(l_state) =
+       cl_atradt_instant_tracing=>s_ref_trace_session->get_state( ).
+
+    cl_abap_unit_assert=>assert_equals( act = l_state
+                                        exp = ce_atrapi_trace_state=>m_active_stopped
+                                        msg = `wrong state` ). "#EC *
+
+    DATA(l_params) =
+      cl_atradt_instant_tracing=>s_ref_trace_session->get_params( )->get_trace_params( i_flg_evaluate = 'X' ).
+
+    cl_abap_unit_assert=>assert_equals( act = l_params-aggregation_kind
+                                        exp = 3
+                                        msg = |wrong aggregation kind { l_params-aggregation_kind }| ). "#EC *
+
+    lcl_profiler_helper=>delete_file( i_file = l_ref_file ).
+  ENDMETHOD.
+ENDCLASS.
+
+
+CLASS lcl_profiler_helper IMPLEMENTATION.
+  METHOD create_profiler_id.
+    DATA:
+      l_description    TYPE string,
+      l_ref_params     TYPE REF TO if_atrapi_trace_params,
+      l_ref_main_srv   TYPE REF TO if_atrapi_main_service,
+      l_ref_params_srv TYPE REF TO if_atrapi_trace_params_service.
+
+    l_ref_main_srv   = cl_atrapi_main_service=>s_get_instance( ).
+    l_ref_params_srv = l_ref_main_srv->get_trace_params_service( ).
+
+    r_id = |{ sy-datum }{ sy-uzeit }{ sy-uname }|.
+    l_description = |Unit Test for program run| ##NO_TEXT.
+    l_ref_params = l_ref_params_srv->create_new_params( ).
+    l_ref_params->set_general_parameters( i_aggregation_kind = '3'
+                                          i_aggregation      = 'X'
+                                          i_description      = l_description ). "#EC *
+
+    TRY.
+
+        l_ref_params_srv->save_params_to_shm( i_id               = r_id
+                                              i_ref_trace_params = l_ref_params ).
+
+      CATCH cx_atrapi_failure ##no_handler.
+    ENDTRY.
+  ENDMETHOD.
+
+
+  METHOD delete_file.
+    CHECK i_file IS NOT INITIAL.
+
+    TRY.
+
+        i_file->delete( ).
+
+      CATCH cx_atrapi_not_authorized ##NO_HANDLER.
+      CATCH cx_atrapi_failure ##NO_HANDLER.
+
+    ENDTRY.
+  ENDMETHOD.
+ENDCLASS.
+
+
+
+CLASS lcltd_classrun_without_name DEFINITION FINAL FOR TESTING DURATION SHORT RISK LEVEL HARMLESS.
+
+  PUBLIC SECTION.
+    INTERFACES if_oo_adt_classrun.
+
+    CONSTANTS co_class_name TYPE seoclsname                     VALUE 'LCLTD_CLASSRUN_WITHOUT_NAME' ##NO_TEXT.
+    CONSTANTS co_string     TYPE string                         VALUE 'TesTlinGer' ##NO_TEXT.
+    CONSTANTS co_c_length2  TYPE c          LENGTH 2            VALUE 'xy' ##NO_TEXT.
+    CONSTANTS co_integer    TYPE i                              VALUE 42.
+    CONSTANTS co_n_length_2 TYPE n          LENGTH 2            VALUE '43' ##NO_TEXT.
+    CONSTANTS co_f          TYPE f                              VALUE 44.
+    CONSTANTS co_int8       TYPE int8                           VALUE 45.
+    CONSTANTS co_p_length8  TYPE p          LENGTH 8 DECIMALS 2 VALUE '1.99' ##NO_TEXT.
+
+    TYPES:
+      BEGIN OF structure,
+        element_i      TYPE i,
+        element_string TYPE string,
+      END OF structure.
+    TYPES:
+      table_structure TYPE STANDARD TABLE OF structure WITH DEFAULT KEY,
+      string_table    TYPE STANDARD TABLE OF string WITH DEFAULT KEY.
+
+ENDCLASS.
+
+
+
+CLASS lcltd_classrun_without_name IMPLEMENTATION.
+  METHOD if_oo_adt_classrun~main.
+    DATA output TYPE REF TO if_oo_adt_classrun_out ##NEEDED.
+
+    DATA struc  TYPE structure.
+
+    struc = VALUE #( element_i      = 42
+                     element_string = '43' ).
+
+    DATA struc_table TYPE table_structure.
+    INSERT struc INTO TABLE struc_table.
+
+    DATA stringtable TYPE string_table.
+    INSERT `abc` INTO TABLE stringtable.
+
+    out->write( lcltd_classrun_without_name=>co_string ).
+    out->write( lcltd_classrun_without_name=>co_c_length2 ).
+    out->write( lcltd_classrun_without_name=>co_integer ).
+    out->write( lcltd_classrun_without_name=>co_n_length_2 ).
+    out->write( lcltd_classrun_without_name=>co_f ).
+    out->write( lcltd_classrun_without_name=>co_int8 ).
+    out->write( lcltd_classrun_without_name=>co_p_length8 ).
+    out->write( struc ).
+    out->write( struc_table ).
+    out->write( stringtable ).
+  ENDMETHOD.
+ENDCLASS.
+
+
+
+CLASS lcltd_classrun_with_name DEFINITION FINAL FOR TESTING DURATION SHORT RISK LEVEL HARMLESS.
+
+  PUBLIC SECTION.
+    INTERFACES if_oo_adt_classrun.
+
+    CONSTANTS co_class_name TYPE seoclsname                     VALUE 'LCLTD_CLASSRUN_WITH_NAME' ##NO_TEXT.
+    CONSTANTS co_string     TYPE string                         VALUE 'TesTlinGer' ##NO_TEXT.
+    CONSTANTS co_c_length2  TYPE c          LENGTH 2            VALUE 'xy' ##NO_TEXT.
+    CONSTANTS co_integer    TYPE i                              VALUE 42.
+    CONSTANTS co_n_length_2 TYPE n          LENGTH 2            VALUE '43' ##NO_TEXT.
+    CONSTANTS co_f          TYPE f                              VALUE 44.
+    CONSTANTS co_int8       TYPE int8                           VALUE 45.
+    CONSTANTS co_p_length8  TYPE p          LENGTH 8 DECIMALS 2 VALUE '1.99' ##NO_TEXT.
+
+    TYPES:
+      BEGIN OF structure,
+        element_i      TYPE i,
+        element_string TYPE string,
+      END OF structure.
+    TYPES:
+      table_structure TYPE STANDARD TABLE OF structure WITH DEFAULT KEY,
+      string_table    TYPE STANDARD TABLE OF string WITH DEFAULT KEY.
+
+ENDCLASS.
+
+
+
+CLASS lcltd_classrun_with_name IMPLEMENTATION.
+  METHOD if_oo_adt_classrun~main.
+    DATA output TYPE REF TO if_oo_adt_classrun_out ##NEEDED.
+
+    DATA struc  TYPE structure.
+
+    struc = VALUE #( element_i      = 42
+                     element_string = '43' ).
+
+    DATA struc_table TYPE table_structure.
+    INSERT struc INTO TABLE struc_table.
+
+    DATA stringtable TYPE string_table.
+    INSERT `abc` INTO TABLE stringtable.
+
+    out->write( data = lcltd_classrun_with_name=>co_string name = 'String Name' ).
+    out->write( data = lcltd_classrun_with_name=>co_c_length2 name = 'C Name' ).
+    out->write( data = lcltd_classrun_with_name=>co_integer name = 'I Name' ).
+    out->write( data = lcltd_classrun_with_name=>co_n_length_2 name = 'N Name' ).
+    out->write( data = lcltd_classrun_with_name=>co_f name = 'F Name' ).
+    out->write( data = lcltd_classrun_with_name=>co_int8 name = 'Int8 Name' ).
+    out->write( data = lcltd_classrun_with_name=>co_p_length8 name = 'P Name' ).
+    out->write( data = struc name = 'Struc Name' ).
+    out->write( data = struc_table name = 'Struc Table Name' ).
+    out->write( data = stringtable name = 'Stringtab Name' ).
+  ENDMETHOD.
+ENDCLASS.
+
+
+
+CLASS ltcl_classrun_output DEFINITION FOR TESTING
+  DURATION SHORT RISK LEVEL HARMLESS.
+
+  PRIVATE SECTION.
+    DATA: resource                  TYPE REF TO cl_oo_adt_res_classrun,
+          request_stub              TYPE REF TO cl_adt_rest_request_stub,
+          response_spy              TYPE REF TO cl_adt_rest_response_spy,
+          out                       TYPE xstring,
+          expected_output_stringtab TYPE string_table.
+
+    METHODS name_supplied    FOR TESTING RAISING cx_static_check.
+    METHODS no_name_supplied FOR TESTING RAISING cx_static_check.
+
+    METHODS setup.
+
+    METHODS prepare_for_post
+      IMPORTING classname TYPE seoclsname.
+
+    METHODS assert_output.
+ENDCLASS.
+
+
+
+CLASS ltcl_classrun_output IMPLEMENTATION.
+  METHOD setup.
+    resource = NEW cl_oo_adt_res_classrun( ).
+    request_stub = NEW cl_adt_rest_request_stub( ).
+    response_spy = NEW cl_adt_rest_response_spy( ).
+  ENDMETHOD.
+
+
+  METHOD name_supplied.
+    " Output with name: name and value
+    prepare_for_post( lcltd_classrun_with_name=>co_class_name ).
+    TEST-INJECTION seo_class_all_implementg_get.
+      ls_seorelkey-clsname    = lcltd_classrun_with_name=>co_class_name.
+      ls_seorelkey-refclsname = 'IF_OO_ADT_CLASSRUN'.
+      APPEND ls_seorelkey TO lt_seor_implementing_keys.
+    END-TEST-INJECTION.
+
+    expected_output_stringtab = VALUE #( (  `String Name` )
+                                         (  `TesTlinGer` )
+                                         (  `C Name` )
+                                         (  `xy` )
+                                         (  `I Name  ` )
+                                         (  `42  ` )
+                                         (  `N Name  ` )
+                                         (  `43  ` )
+                                         (  `F Name  ` )
+                                         (  `4.4E1  ` )
+                                         (  `Int8 Name  ` )
+                                         (  `45  ` )
+                                         (  `P Name  ` )
+                                         (  `1.99  ` )
+                                         (  `Struc Name  ` )
+                                         (  `ELEMENT_I  ELEMENT_STRING  ` )
+                                         (  `42         43              ` )
+                                         (  `Struc Table Name  ` )
+                                         (  `ELEMENT_I  ELEMENT_STRING  ` )
+                                         (  `42         43              ` )
+                                         (  `Stringtab Name  ` )
+                                         (  `abc ` ) ).
+
+    resource->post( request = request_stub response = response_spy ).
+
+    assert_output( ).
+  ENDMETHOD.
+
+
+  METHOD no_name_supplied.
+    " Output without name: only value (data)
+
+    prepare_for_post( lcltd_classrun_without_name=>co_class_name ).
+    TEST-INJECTION seo_class_all_implementg_get.
+      ls_seorelkey-clsname    = lcltd_classrun_without_name=>co_class_name.
+      ls_seorelkey-refclsname = 'IF_OO_ADT_CLASSRUN'.
+      APPEND ls_seorelkey TO lt_seor_implementing_keys.
+    END-TEST-INJECTION.
+
+    expected_output_stringtab = VALUE #( (  `TesTlinGer` )
+                                         (  `xy` )
+                                         (  `42  ` )
+                                         (  `43  ` )
+                                         (  `4.4E1  ` )
+                                         (  `45  ` )
+                                         (  `1.99  ` )
+                                         (  `ELEMENT_I  ELEMENT_STRING  ` )
+                                         (  `42         43              ` )
+                                         (  `ELEMENT_I  ELEMENT_STRING  ` )
+                                         (  `42         43              ` )
+                                         (  `abc ` ) ).
+
+    resource->post( request = request_stub response = response_spy ).
+
+    assert_output( ).
+  ENDMETHOD.
+
+
+  METHOD prepare_for_post.
+    "   prepare the request's URI attributes
+    request_stub->set_uri_attribute( name = 'classname' value = classname ).
+    request_stub->add_header_field( key   = if_http_header_fields=>accept
+                                    value = if_rest_media_type=>gc_text_plain ).
+
+    TEST-INJECTION abplngvs_is_user_authorized.
+      is_user_authorized = abap_true.
+    END-TEST-INJECTION.
+
+    TEST-INJECTION abplngvs_get_version_of_object.
+      ls_abap_language_version-id           = 'X'.
+      ls_abap_language_version-object_state = 'A'.
+    END-TEST-INJECTION.
+
+  ENDMETHOD.
+
+
+  METHOD assert_output.
+    CONCATENATE LINES OF expected_output_stringtab INTO DATA(expected_output_as_string).
+    CONDENSE expected_output_as_string NO-GAPS.
+
+    TRY.
+        response_spy->get_body_data( IMPORTING data = out ).
+      CATCH cx_adt_rest_data_invalid.
+        cl_abap_unit_assert=>fail( msg = 'Response could not be read.' ).
+    ENDTRY.
+
+    DATA(actual_output_string) = cl_abap_codepage=>convert_from( out ).
+    REPLACE ALL OCCURRENCES OF cl_abap_char_utilities=>newline IN actual_output_string WITH ''.
+    CONDENSE actual_output_string NO-GAPS.
+
+    cl_abap_unit_assert=>assert_equals( act = actual_output_string
+                                        exp = expected_output_as_string ).
+  ENDMETHOD.
+ENDCLASS.

@@ -1,0 +1,35 @@
+CLASS zgk0612_cl_test_trade DEFINITION
+  PUBLIC
+  FINAL
+  CREATE PUBLIC .
+
+  PUBLIC SECTION.
+    INTERFACES if_oo_adt_classrun.
+  PROTECTED SECTION.
+  PRIVATE SECTION.
+ENDCLASS.
+
+
+
+CLASS zgk0612_cl_test_trade IMPLEMENTATION.
+
+  METHOD if_oo_adt_classrun~main.
+    DATA: lo_trader TYPE REF TO zgk0612_cl_sdust_trader,
+          lv_price  TYPE decfloat16.
+
+
+    CREATE OBJECT lo_trader.
+    TRY.
+
+        DATA(lv_final_price) = lo_trader->buy_stardust( iv_stardust_id = 9
+                                                        iv_buyer_name = 'Silver' ).
+
+        out->write( 'Trade successful!' ).
+        out->write( 'Final price: ' && lv_final_price && '$$' ).
+
+      CATCH zgk0612_cx_trading_exception INTO DATA(lx_error).
+        out->write( 'Error: ' && lx_error->message ).
+    ENDTRY.
+  ENDMETHOD.
+
+ENDCLASS.

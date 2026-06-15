@@ -1,0 +1,244 @@
+CLASS zgk0612_cl_sdust_trader DEFINITION
+  PUBLIC
+  FINAL
+  CREATE PUBLIC .
+
+  PUBLIC SECTION.
+    CLASS-DATA: mt_locked_stardusts TYPE TABLE OF i.
+
+    METHODS:
+      buy_stardust
+        IMPORTING iv_stardust_id        TYPE i
+                  iv_buyer_name         TYPE string
+        RETURNING VALUE(rv_final_price) TYPE decfloat16
+        RAISING   zgk0612_cx_trading_exception,
+
+      sell_stardust
+        IMPORTING iv_stardust_id        TYPE i
+                  iv_seller_name        TYPE string
+        RETURNING VALUE(rv_final_price) TYPE decfloat16
+        RAISING   zgk0612_cx_trading_exception,
+
+      exchange_stardust
+        IMPORTING iv_stardust_id    TYPE i
+                  iv_stardust_to_id TYPE i
+        RAISING   zgk0612_cx_trading_exception.
+  PROTECTED SECTION.
+  PRIVATE SECTION.
+    METHODS:
+      calculate_price
+        IMPORTING iv_base_price            TYPE decfloat16
+                  iv_reputation            TYPE i
+        RETURNING VALUE(rv_adjusted_price) TYPE decfloat16,
+
+      lock_stardust
+        IMPORTING iv_stardust_id TYPE i
+        RAISING   zgk0612_cx_trading_exception,
+
+      unlock_stardust
+        IMPORTING iv_stardust_id TYPE i,
+
+      finalize_trade
+        IMPORTING iv_stardust_id TYPE i
+                  is_spacefarer  TYPE zgk0612_t_spacef
+        RAISING   zgk0612_cx_trading_exception.
+
+ENDCLASS.
+
+
+CLASS zgk0612_cl_sdust_trader IMPLEMENTATION.
+
+  METHOD buy_stardust.
+
+    "checking stardust
+    SELECT SINGLE * FROM zgk0612_t_sdust
+      WHERE collection_id = @iv_stardust_id
+      INTO @DATA(ls_stardust).
+
+    IF sy-subrc NE 0.
+      RAISE EXCEPTION TYPE zgk0612_cx_trading_exception
+        EXPORTING
+          message = 'Stardust not found'.
+    ENDIF.
+
+    lock_stardust( iv_stardust_id ).
+
+    "Checking the buyer
+    SELECT SINGLE * FROM zgk0612_t_spacef
+      WHERE spacef_name = @iv_buyer_name
+      INTO @DATA(ls_buyer).
+    IF sy-subrc NE 0.
+      unlock_stardust( iv_stardust_id ).
+      RAISE EXCEPTION TYPE zgk0612_cx_trading_exception
+        EXPORTING
+          message = 'Buyer not found'.
+    ENDIF.
+
+    "calculate buyer price
+    DATA(l_v_buyer_price) = calculate_price( iv_base_price = ls_stardust-value
+                                             iv_reputation = CONV i( ls_buyer-reputation ) ).
+
+    "calculate total price
+    l_v_buyer_price *= ls_stardust-weight.
+
+    IF l_v_buyer_price GT ls_buyer-credits.
+      unlock_stardust( iv_stardust_id ).
+      RAISE EXCEPTION TYPE zgk0612_cx_trading_exception
+        EXPORTING
+          message = 'Insufficient credits'.
+    ENDIF.
+
+    ls_buyer-credits -= l_v_buyer_price.
+
+    finalize_trade( is_spacefarer = ls_buyer
+                    iv_stardust_id = iv_stardust_id ).
+
+    unlock_stardust( iv_stardust_id ).
+
+  ENDMETHOD.
+
+  METHOD exchange_stardust.
+
+    "checking stardust
+    SELECT SINGLE * FROM zgk0612_v_spacef_sdust
+      WHERE id = @iv_stardust_id
+      INTO @DATA(ls_stardust_buyer).
+    IF sy-subrc NE 0.
+      RAISE EXCEPTION TYPE zgk0612_cx_trading_exception
+        EXPORTING
+          message = 'Stardust not found'.
+    ENDIF.
+
+    "checking stardust
+    SELECT SINGLE * FROM zgk0612_v_spacef_sdust
+      WHERE id = @iv_stardust_id
+      INTO @DATA(ls_stardust_seller).
+    IF sy-subrc NE 0.
+      RAISE EXCEPTION TYPE zgk0612_cx_trading_exception
+        EXPORTING
+          message = 'Stardust not found'.
+    ENDIF.
+
+
+    DATA(lv_buyer_id) = ls_stardust_buyer-collection_id.
+    DATA(lv_seller_id) = ls_stardust_seller-collection_id.
+
+    ls_stardust_buyer-collection_id = lv_seller_id.
+    ls_stardust_seller-collection_id = lv_buyer_id.
+
+    TRY.
+        UPDATE zgk0612_t_sdust SET collection_id = @ls_stardust_buyer-collection_id
+             WHERE id = @ls_stardust_buyer-id.
+
+        UPDATE zgk0612_t_sdust SET collection_id = @ls_stardust_seller-collection_id
+             WHERE id = @ls_stardust_seller-id.
+
+        COMMIT WORK.
+
+      CATCH cx_sy_sql_error INTO DATA(lx_error).
+        unlock_stardust( iv_stardust_id ).
+        ROLLBACK WORK.
+        RAISE EXCEPTION TYPE zgk0612_cx_trading_exception
+          EXPORTING
+            message = 'Database error. Unable to finalize the exchange.'.
+    ENDTRY.
+
+  ENDMETHOD.
+
+  METHOD calculate_price.
+
+    IF iv_reputation GT 30.
+      DATA(lv_diff) = ( ( iv_reputation - 30 ) DIV 5 ) * CONV decfloat16( '0.01' ).
+      DATA(lv_factor) = 1 + lv_diff.
+    ELSEIF iv_reputation LT 30.
+      lv_diff = ( ( 30 - iv_reputation ) DIV 5 ) * CONV decfloat16( '0.01' ).
+      lv_factor = 1 - lv_diff.
+    ELSE.
+      lv_factor = 1.
+    ENDIF.
+
+    rv_adjusted_price = iv_base_price * lv_factor.
+
+  ENDMETHOD.
+
+  METHOD lock_stardust.
+
+    IF line_exists( zgk0612_cl_sdust_trader=>mt_locked_stardusts[ iv_stardust_id ] ).
+      RAISE EXCEPTION TYPE zgk0612_cx_trading_exception
+        EXPORTING
+          message = 'Stardust is locked for trading'.
+    ENDIF.
+
+    APPEND iv_stardust_id TO zgk0612_cl_sdust_trader=>mt_locked_stardusts.
+
+  ENDMETHOD.
+
+  METHOD unlock_stardust.
+
+    DELETE zgk0612_cl_sdust_trader=>mt_locked_stardusts
+      WHERE table_line = iv_stardust_id.
+
+  ENDMETHOD.
+
+  METHOD finalize_trade.
+
+    TRY.
+        UPDATE zgk0612_t_spacef
+            SET credits = @is_spacefarer-credits
+            WHERE spacef_name = @is_spacefarer-spacef_name.
+
+        COMMIT WORK.
+
+      CATCH cx_sy_sql_error INTO DATA(lx_error).
+        unlock_stardust( iv_stardust_id ).
+        ROLLBACK WORK.
+        RAISE EXCEPTION TYPE zgk0612_cx_trading_exception
+          EXPORTING
+            message = 'Database error. Unable to finalize the sale.'.
+    ENDTRY.
+
+  ENDMETHOD.
+
+  METHOD sell_stardust.
+
+    "checking stardust
+    SELECT SINGLE * FROM zgk0612_t_sdust
+      WHERE collection_id = @iv_stardust_id
+      INTO @DATA(ls_stardust).
+
+    IF sy-subrc NE 0.
+      RAISE EXCEPTION TYPE zgk0612_cx_trading_exception
+        EXPORTING
+          message = 'Stardust not found'.
+    ENDIF.
+
+    lock_stardust( iv_stardust_id ).
+
+    "Checking the buyer
+    SELECT SINGLE * FROM zgk0612_t_spacef
+      WHERE spacef_name = @iv_seller_name
+      INTO @DATA(ls_seller).
+    IF sy-subrc NE 0.
+      unlock_stardust( iv_stardust_id ).
+      RAISE EXCEPTION TYPE zgk0612_cx_trading_exception
+        EXPORTING
+          message = 'Buyer not found'.
+    ENDIF.
+
+    "calculate buyer price
+    DATA(l_v_seller_price) = calculate_price( iv_base_price = ls_stardust-value
+                                             iv_reputation = CONV i( ls_seller-reputation ) ).
+
+    "calculate total price
+    l_v_seller_price *= ls_stardust-weight.
+
+    ls_seller-credits += l_v_seller_price.
+
+    finalize_trade( is_spacefarer = ls_seller
+                    iv_stardust_id = iv_stardust_id ).
+
+    unlock_stardust( iv_stardust_id ).
+
+  ENDMETHOD.
+
+ENDCLASS.

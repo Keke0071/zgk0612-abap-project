@@ -1,0 +1,4 @@
+@EndUserText.label: 'RAP Service for Spacefarers'
+define service ZGK0612_SPACEFARER_SERVICE {
+  expose ZGK0612_V_SPACEF;
+}
