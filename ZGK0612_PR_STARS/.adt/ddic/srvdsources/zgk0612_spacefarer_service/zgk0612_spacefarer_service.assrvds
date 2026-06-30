@@ -1,4 +1,6 @@
 @EndUserText.label: 'RAP Service for Spacefarers'
 define service ZGK0612_SPACEFARER_SERVICE {
   expose ZGK0612_V_SPACEF;
+  expose ZGK0612_V_SPACEF_SDUST;
+  expose ZGK0612_V_SPACEF_WEALTH;
 }

@@ -36,7 +36,8 @@ CLASS zgk0612_cl_sdust_trader DEFINITION
         RAISING   zgk0612_cx_trading_exception,
 
       unlock_stardust
-        IMPORTING iv_stardust_id TYPE i,
+        IMPORTING iv_stardust_id TYPE i
+        RAISING   zgk0612_cx_trading_exception,
 
       finalize_trade
         IMPORTING iv_stardust_id TYPE i
@@ -140,7 +141,7 @@ CLASS zgk0612_cl_sdust_trader IMPLEMENTATION.
         ROLLBACK WORK.
         RAISE EXCEPTION TYPE zgk0612_cx_trading_exception
           EXPORTING
-            message = 'Database error. Unable to finalize the exchange.'.
+            message = 'Database error. Unable to finalize the exchange'.
     ENDTRY.
 
   ENDMETHOD.
@@ -163,20 +164,48 @@ CLASS zgk0612_cl_sdust_trader IMPLEMENTATION.
 
   METHOD lock_stardust.
 
-    IF line_exists( zgk0612_cl_sdust_trader=>mt_locked_stardusts[ iv_stardust_id ] ).
-      RAISE EXCEPTION TYPE zgk0612_cx_trading_exception
-        EXPORTING
-          message = 'Stardust is locked for trading'.
-    ENDIF.
+*    IF line_exists( zgk0612_cl_sdust_trader=>mt_locked_stardusts[ iv_stardust_id ] ).
+*      RAISE EXCEPTION TYPE zgk0612_cx_trading_exception
+*        EXPORTING
+*          message = 'Stardust is locked for trading'.
+*    ENDIF.
+*
+*    APPEND iv_stardust_id TO zgk0612_cl_sdust_trader=>mt_locked_stardusts.
 
-    APPEND iv_stardust_id TO zgk0612_cl_sdust_trader=>mt_locked_stardusts.
+    TRY.
+        "Get instance of lock object
+        DATA(lo_lock) = cl_abap_lock_object_factory=>get_instance( iv_name = 'EZ_ZGK0612_SDUST' ).
+
+        lo_lock->enqueue( it_parameter = VALUE #( ( name = 'ID' value = REF #( iv_stardust_id ) ) ) ).
+
+      CATCH cx_abap_foreign_lock INTO DATA(ex_foreign_lock).
+        RAISE EXCEPTION TYPE zgk0612_cx_trading_exception
+          EXPORTING
+            message = 'Stardust is locked for trading'.
+      CATCH cx_root INTO DATA(ex_lock_failure).
+        RAISE EXCEPTION TYPE zgk0612_cx_trading_exception
+          EXPORTING
+            message = 'An error occurred while locking'.
+
+    ENDTRY.
 
   ENDMETHOD.
 
   METHOD unlock_stardust.
 
-    DELETE zgk0612_cl_sdust_trader=>mt_locked_stardusts
-      WHERE table_line = iv_stardust_id.
+*    DELETE zgk0612_cl_sdust_trader=>mt_locked_stardusts
+*      WHERE table_line = iv_stardust_id.
+    TRY.
+        DATA(lo_lock) = cl_abap_lock_object_factory=>get_instance( iv_name = 'EZ_ZGK0612_SDUST' ).
+
+        lo_lock->dequeue( it_parameter = VALUE #( ( name = 'ID' value = REF #( iv_stardust_id ) ) ) ).
+
+      CATCH cx_root INTO DATA(ex_lock_failure).
+        RAISE EXCEPTION TYPE zgk0612_cx_trading_exception
+          EXPORTING
+            message = 'An error occurred while unlocking'.
+
+    ENDTRY.
 
   ENDMETHOD.
 
