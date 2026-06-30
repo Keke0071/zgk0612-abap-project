@@ -1,0 +1,760 @@
+class ltd_sxt_tracer definition final for testing
+    duration short risk level harmless.
+  public section.
+    interfaces if_sxt_tracer.
+    methods constructor
+      importing trace_level type if_sxt_types=>ty_trace_level.
+  private section.
+    data mock_trace_level type if_sxt_types=>ty_trace_level.
+endclass.
+
+class ltd_sxt_tracer implementation.
+  method constructor.
+    me->mock_trace_level = trace_level.
+  endmethod.
+
+  method if_sxt_tracer~add_header_properties ##NEEDED.
+  endmethod.
+
+  method if_sxt_tracer~begin_hierarchy ##NEEDED.
+    hierarchy_number = 1.
+  endmethod.
+
+  method if_sxt_tracer~end_hierarchy ##NEEDED.
+  endmethod.
+
+  method if_sxt_tracer~is_active.
+    if trace_level <= mock_trace_level.
+      active = 'X'.
+    endif.
+  endmethod.
+
+  method if_sxt_tracer~is_any_active ##NEEDED.
+  endmethod.
+
+  method if_sxt_tracer~trace ##NEEDED.
+  endmethod.
+endclass.
+
+class ltc_abap_behv_detval_hometests definition deferred.
+class cl_abap_behv_detval definition local friends ltc_abap_behv_detval_hometests.
+class ltc_abap_behv_detval_hometests definition final for testing
+    duration long risk level harmless.
+  public section.
+    methods execute_detvals_count_exec_nd for testing.
+    methods execute_detvals_count_exec for testing.
+    methods execute_detvals_count_exec_tr2 for testing.
+    methods execute_detvals_count_exec_tr4 for testing.
+    methods dump_on_modify_in_validation for testing.
+    methods no_dump_on_trigger_in_det for testing.
+    methods no_dump_on_action_in_det for testing.
+    methods no_dump_on_trigger_det for testing.
+    methods det_on_save_mod_save for testing.
+    methods cross_bo_in_det_on_modify for testing.
+    methods cross_bo_in_det_on_save for testing.
+    methods trigger_in_det for testing.
+    methods cleanup_triggers_nd for testing.
+    methods cleanup_triggers for testing.
+    methods execute_val_in_one_handler for testing.
+    methods execute_det_in_one_handler for testing.
+    methods execute_det_s_in_one_handler for testing.
+    methods execute_det_act_in_1_handler for testing.
+    methods execute_det_action for testing.
+    methods execute_det_action_tr1 for testing.
+    methods execute_det_action_tr4 for testing.
+    methods execute_det_action_retrigger for testing.
+    methods execute_det_action_always_retr for testing.
+    methods execute_det_action_notrigger for testing.
+    methods dump_endless_on_save for testing.
+    methods dump_det_act_endless_on_save for testing.
+    methods on_save_create_update for testing.
+    methods update for testing.
+    methods discard for testing.
+    methods delete for testing.
+    methods create_delete for testing.
+    methods update_delete for testing.
+    methods delete_create for testing.
+    methods on_save_create_update_fields for testing.
+    methods on_modify_duplicate_keys for testing.
+    methods tky_pky_key for testing.
+    methods dump_eml_cross_bo_modify for testing.
+    methods eml_draft_discard for testing.
+    methods read_draft_persistency for testing.
+    methods read_draft_persistency2 for testing.
+    methods read_draft_persistency_pid for testing.
+    methods eml_modify_deep_stack for testing.
+    methods no_changes for testing.
+    methods det_act_no_instances for testing.
+    methods initial_key for testing.
+    methods create_and_field_on_mod for testing.
+    methods key_alignment for testing.
+    methods dump_endless_on_mod for testing.
+    methods det_new_reported for testing.
+    methods det_old_reported for testing.
+    methods detact_det_old for testing.
+    methods detact_det_new for testing.
+    methods detact_det_mixed for testing.
+    methods val_mixed_rep_failed for testing.
+    methods det_mod_mixed_reported for testing.
+    methods key_alignment_det_act for testing.
+    methods key_alignment2_det_act for testing.
+    methods key_alignment3_det_act_ln for testing.
+    methods add_notifications for testing.
+    methods add_notifications_readonly for testing.
+    methods unmanaged_core_det for testing.
+"    methods det_on_save_twice for testing.
+    methods save_opt1 for testing.
+    methods save_no_opt1 for testing.
+    methods read_control_flags for testing.
+    methods read_control_flags_bsp for testing.
+    methods empty_notification for testing.
+
+
+    class-data test_dvm_no_dumps type ref to object.
+    class-data test_dvm type ref to object.
+  private section.
+    class-methods class_setup.
+    methods setup.
+    methods teardown.
+    class-methods set_cls
+      importing dvm type ref to if_abap_behv_detval
+                abap_behv_detval type char1.
+    class-methods reset_cls.
+    class-data implementation type ref to if_abap_behv_detval.
+    class-data mode type char1.
+
+endclass.
+
+class ltc_add_notifications definition final.
+  public section.
+    interfaces if_abap_behv_detval.
+    data changes type cl_abap_behv_detval=>tt_cud_instances ##needed.
+endclass.
+
+class ltc_add_notifications implementation.
+  method if_abap_behv_detval~add_change_notification_tab.
+    data ref type ref to data.
+    clear me->changes.
+    loop at changes into data(change).
+      assign change-instances->* to field-symbol(<tab>).
+      create data ref like <tab>.
+      assign ref->* to field-symbol(<tab_copy>).
+      <tab_copy> = <tab>.
+      change-instances = ref.
+      append change to me->changes.
+    endloop.
+  endmethod.
+
+  method if_abap_behv_detval~cleanup ##NEEDED.
+  endmethod.
+
+  method if_abap_behv_detval~exec_determinations_on_modify ##NEEDED.
+  endmethod.
+
+  method if_abap_behv_detval~exec_determinations_on_save ##NEEDED.
+  endmethod.
+
+  method if_abap_behv_detval~exec_determine_action ##NEEDED.
+  endmethod.
+
+  method if_abap_behv_detval~exec_validations ##NEEDED.
+  endmethod.
+
+  method if_abap_behv_detval~check_finalize_is_complete ##NEEDED.
+  endmethod.
+
+  method if_abap_behv_detval~cleanup_finalize ##NEEDED.
+  endmethod.
+
+  method if_abap_behv_detval~read_control_flags ##NEEDED.
+
+  endmethod.
+
+endclass.
+
+class ltc_detval_no_dumps definition inheriting from lcl_detval_with_trace final for testing
+    duration short risk level harmless.
+  public section.
+    methods constructor
+      importing
+        mock_trace_level type if_sxt_types=>ty_trace_level optional.
+  protected section.
+    methods dump redefinition.
+endclass.
+
+class ltc_detval_no_dumps implementation.
+  method constructor.
+    super->constructor( ).
+    if mock_trace_level is not initial.
+      me->sxt_tracer = new ltd_sxt_tracer( mock_trace_level ).
+    endif.
+  endmethod.
+
+  method dump.
+    if conv i( kind ) > 0. "no internal error
+      dump_xtrace( kind ).
+      call method ltc_abap_behv_detval_hometests=>test_dvm_no_dumps->('DUMP') exporting kind = conv i( kind ).
+    else.
+      super->dump( kind ).
+    endif.
+  endmethod.
+endclass.
+
+class ltc_abap_behv_detval_hometests implementation.
+  method class_setup.
+    try.
+      create object test_dvm_no_dumps type (`CL_SVER_DVM`)
+        exporting dvm = new ltc_detval_no_dumps( ).
+    catch cx_sy_create_object_error.
+      cl_aunit_assert=>abort( msg = `Need HOME objects for execution` ).
+    endtry.
+  endmethod.
+  method setup.
+    data success type sap_bool.
+    call method ('CL_SVER_DVM')=>('LOCK') receiving success = success.
+    if success ne abap_true.
+      cl_aunit_assert=>abort( msg = `Locked, cannot execute test` ).
+    endif.
+  endmethod.
+  method teardown.
+    call method ('CL_SVER_DVM')=>('UNLOCK').
+  endmethod.
+  method execute_detvals_count_exec_nd.
+    create object test_dvm_no_dumps type (`CL_SVER_DVM`)
+      exporting dvm = new ltc_detval_no_dumps( ).
+    call method test_dvm_no_dumps->(`EXECUTE_DETVALS_COUNT_EXEC_1`).
+  endmethod.
+  method execute_detvals_count_exec.
+    create object test_dvm type (`CL_SVER_DVM`)
+      exporting dvm = new lcl_detval( ).
+    call method test_dvm->(`EXECUTE_DETVALS_COUNT_EXEC_1`).
+  endmethod.
+  method execute_detvals_count_exec_tr2.
+    create object test_dvm_no_dumps type (`CL_SVER_DVM`)
+      exporting dvm = new ltc_detval_no_dumps( lcl_detval_with_trace=>c_xtrace_extended ).
+    call method test_dvm_no_dumps->(`EXECUTE_DETVALS_COUNT_EXEC_1`).
+  endmethod.
+  method execute_detvals_count_exec_tr4.
+    create object test_dvm_no_dumps type (`CL_SVER_DVM`)
+      exporting dvm = new ltc_detval_no_dumps( lcl_detval_with_trace=>c_xtrace_verbose ).
+    call method test_dvm_no_dumps->(`EXECUTE_DETVALS_COUNT_EXEC_1`).
+  endmethod.
+  method dump_on_modify_in_validation.
+    create object test_dvm_no_dumps type (`CL_SVER_DVM`)
+      exporting dvm = new ltc_detval_no_dumps( ).
+    call method test_dvm_no_dumps->('DUMP_ON_MODIFY_IN_VALIDATION').
+  endmethod.
+  method no_dump_on_trigger_in_det.
+    create object test_dvm_no_dumps type (`CL_SVER_DVM`)
+      exporting dvm = new ltc_detval_no_dumps( ).
+    call method test_dvm_no_dumps->('NO_DUMP_ON_TRIGGER_IN_DET').
+  endmethod.
+  method trigger_in_det.
+    create object test_dvm_no_dumps type (`CL_SVER_DVM`)
+      exporting dvm = new ltc_detval_no_dumps( ).
+    call method test_dvm_no_dumps->('TRIGGER_IN_DET').
+  endmethod.
+  method no_dump_on_trigger_det.
+    create object test_dvm_no_dumps type (`CL_SVER_DVM`)
+      exporting dvm = new ltc_detval_no_dumps( ).
+    call method test_dvm_no_dumps->('NO_DUMP_ON_TRIGGER_DET').
+  endmethod.
+  method no_dump_on_action_in_det.
+    data(dvm) = new ltc_detval_no_dumps( ).
+    create object test_dvm_no_dumps type (`CL_SVER_DVM`)
+      exporting dvm = dvm.
+    cl_abap_behv_detval=>implementation = dvm.
+    call method test_dvm_no_dumps->('NO_DUMP_ON_ACTION_IN_DET').
+  endmethod.
+  method execute_val_in_one_handler.
+    create object test_dvm_no_dumps type (`CL_SVER_DVM`)
+      exporting dvm = new ltc_detval_no_dumps( ).
+    call method test_dvm_no_dumps->('EXECUTE_VAL_IN_ONE_HANDLER').
+  endmethod.
+  method execute_det_in_one_handler.
+    create object test_dvm_no_dumps type (`CL_SVER_DVM`)
+      exporting dvm = new ltc_detval_no_dumps( ).
+    call method test_dvm_no_dumps->('EXECUTE_DET_IN_ONE_HANDLER').
+  endmethod.
+  method execute_det_s_in_one_handler.
+    create object test_dvm_no_dumps type (`CL_SVER_DVM`)
+      exporting dvm = new ltc_detval_no_dumps( ).
+    call method test_dvm_no_dumps->('EXECUTE_DET_S_IN_ONE_HANDLER').
+  endmethod.
+  method execute_det_act_in_1_handler.
+    create object test_dvm_no_dumps type (`CL_SVER_DVM`)
+      exporting dvm = new ltc_detval_no_dumps( ).
+    call method test_dvm_no_dumps->('EXECUTE_DET_ACT_IN_1_HANDLER').
+  endmethod.
+  method cleanup_triggers_nd.
+    create object test_dvm_no_dumps type (`CL_SVER_DVM`)
+      exporting dvm = new ltc_detval_no_dumps( ).
+    call method test_dvm_no_dumps->('CLEANUP_TRIGGERS').
+  endmethod.
+  method cleanup_triggers.
+    create object test_dvm type (`CL_SVER_DVM`)
+      exporting dvm = new lcl_detval( ).
+    call method test_dvm->('CLEANUP_TRIGGERS').
+  endmethod.
+
+  method execute_det_action.
+    create object test_dvm_no_dumps type (`CL_SVER_DVM`)
+      exporting dvm = new ltc_detval_no_dumps( ).
+    call method test_dvm_no_dumps->('EXECUTE_DET_ACTION').
+  endmethod.
+
+  method execute_det_action_tr1.
+    create object test_dvm_no_dumps type (`CL_SVER_DVM`)
+      exporting dvm = new ltc_detval_no_dumps( lcl_detval_with_trace=>c_xtrace_essential ).
+    call method test_dvm_no_dumps->('EXECUTE_DET_ACTION').
+  endmethod.
+
+  method execute_det_action_tr4.
+    create object test_dvm_no_dumps type (`CL_SVER_DVM`)
+      exporting dvm = new ltc_detval_no_dumps( lcl_detval_with_trace=>c_xtrace_verbose ).
+    call method test_dvm_no_dumps->('EXECUTE_DET_ACTION').
+  endmethod.
+
+  method execute_det_action_retrigger.
+    create object test_dvm_no_dumps type (`CL_SVER_DVM`)
+      exporting dvm = new ltc_detval_no_dumps( ).
+    call method test_dvm_no_dumps->('EXECUTE_DET_ACTION_RETRIGGER').
+  endmethod.
+
+  method execute_det_action_always_retr.
+    create object test_dvm_no_dumps type (`CL_SVER_DVM`)
+      exporting dvm = new ltc_detval_no_dumps( ).
+    call method test_dvm_no_dumps->('EXECUTE_DET_ACTION_ALWAYS_RETR').
+  endmethod.
+
+  method execute_det_action_notrigger.
+    create object test_dvm_no_dumps type (`CL_SVER_DVM`)
+      exporting dvm = new ltc_detval_no_dumps( ).
+    call method test_dvm_no_dumps->('EXECUTE_DET_ACTION_NOTRIGGER').
+  endmethod.
+
+  method det_on_save_mod_save.
+    create object test_dvm_no_dumps type (`CL_SVER_DVM`)
+      exporting dvm = new ltc_detval_no_dumps( ).
+    call method test_dvm_no_dumps->('DET_ON_SAVE_MOD_SAVE').
+  endmethod.
+
+  method cross_bo_in_det_on_modify.
+    create object test_dvm_no_dumps type (`CL_SVER_DVM`)
+      exporting dvm = new ltc_detval_no_dumps( ).
+    call method test_dvm_no_dumps->('CROSS_BO_IN_DET_ON_MODIFY').
+  endmethod.
+
+  method cross_bo_in_det_on_save.
+    create object test_dvm_no_dumps type (`CL_SVER_DVM`)
+      exporting dvm = new ltc_detval_no_dumps( ).
+    call method test_dvm_no_dumps->('CROSS_BO_IN_DET_ON_SAVE').
+  endmethod.
+
+  method dump_endless_on_save.
+    create object test_dvm_no_dumps type (`CL_SVER_DVM`)
+      exporting dvm = new ltc_detval_no_dumps( ).
+    call method test_dvm_no_dumps->('DUMP_ENDLESS_ON_SAVE').
+  endmethod.
+
+  method dump_det_act_endless_on_save.
+    data(dvm) = new ltc_detval_no_dumps( ).
+    create object test_dvm_no_dumps type (`CL_SVER_DVM`)
+      exporting dvm = dvm.
+    set_cls( dvm = dvm abap_behv_detval = space ).
+    call method test_dvm_no_dumps->('DUMP_DET_ACT_ENDLESS_ON_SAVE').
+    reset_cls( ).
+  endmethod.
+
+  method on_save_create_update.
+    create object test_dvm_no_dumps type (`CL_SVER_DVM`)
+      exporting dvm = new ltc_detval_no_dumps( ).
+    call method test_dvm_no_dumps->('ON_SAVE_CREATE_UPDATE').
+  endmethod.
+
+  method on_save_create_update_fields.
+    create object test_dvm_no_dumps type (`CL_SVER_DVM`)
+      exporting dvm = new ltc_detval_no_dumps( ).
+    call method test_dvm_no_dumps->('ON_SAVE_CREATE_UPDATE_FIELDS').
+  endmethod.
+
+  method on_modify_duplicate_keys.
+    create object test_dvm_no_dumps type (`CL_SVER_DVM`)
+      exporting dvm = new ltc_detval_no_dumps( ).
+    call method test_dvm_no_dumps->('ON_MODIFY_DUPLICATE_KEYS').
+  endmethod.
+
+  method discard.
+    create object test_dvm_no_dumps type (`CL_SVER_DVM`)
+      exporting dvm = new ltc_detval_no_dumps( ).
+    call method test_dvm_no_dumps->('DISCARD').
+  endmethod.
+
+  method delete.
+    create object test_dvm_no_dumps type (`CL_SVER_DVM`)
+      exporting dvm = new ltc_detval_no_dumps( ).
+    call method test_dvm_no_dumps->('DELETE').
+  endmethod.
+
+  method update.
+    create object test_dvm_no_dumps type (`CL_SVER_DVM`)
+      exporting dvm = new ltc_detval_no_dumps( ).
+    call method test_dvm_no_dumps->('UPDATE').
+  endmethod.
+
+  method create_delete.
+    create object test_dvm_no_dumps type (`CL_SVER_DVM`)
+      exporting dvm = new ltc_detval_no_dumps( ).
+    call method test_dvm_no_dumps->('CREATE_DELETE').
+  endmethod.
+
+  method update_delete.
+    create object test_dvm_no_dumps type (`CL_SVER_DVM`)
+      exporting dvm = new ltc_detval_no_dumps( ).
+    call method test_dvm_no_dumps->('UPDATE_DELETE').
+  endmethod.
+
+  method delete_create.
+    create object test_dvm_no_dumps type (`CL_SVER_DVM`)
+      exporting dvm = new ltc_detval_no_dumps( ).
+    call method test_dvm_no_dumps->('DELETE_CREATE').
+  endmethod.
+
+  method tky_pky_key.
+    create object test_dvm_no_dumps type (`CL_SVER_DVM`)
+      exporting dvm = new ltc_detval_no_dumps( ).
+    call method test_dvm_no_dumps->('TKY_PKY_KEY').
+  endmethod.
+
+  method dump_eml_cross_bo_modify.
+    data(dvm) = new ltc_detval_no_dumps( ).
+    create object test_dvm_no_dumps type (`CL_SVER_DVM`)
+      exporting dvm = dvm.
+    set_cls( dvm = dvm  abap_behv_detval = 'T' ).
+    call method test_dvm_no_dumps->('DUMP_EML_CROSS_BO_MODIFY').
+    reset_cls( ).
+  endmethod.
+
+  method eml_modify_deep_stack.
+    data(dvm) = new ltc_detval_no_dumps( ).
+    create object test_dvm_no_dumps type (`CL_SVER_DVM`)
+      exporting dvm = dvm.
+    set_cls( dvm = dvm  abap_behv_detval = 'S' ).
+    call method test_dvm_no_dumps->('EML_MODIFY_DEEP_STACK').
+    reset_cls( ).
+  endmethod.
+
+  method eml_draft_discard.
+    data(dvm) = new ltc_detval_no_dumps( ).
+    create object test_dvm_no_dumps type (`CL_SVER_DVM`)
+      exporting dvm = dvm.
+    set_cls( dvm = dvm  abap_behv_detval = 'T' ).
+    call method test_dvm_no_dumps->('EML_DRAFT_DISCARD').
+    reset_cls( ).
+  endmethod.
+
+  method read_draft_persistency.
+    create object test_dvm_no_dumps type (`CL_SVER_DVM`)
+      exporting dvm = new ltc_detval_no_dumps( ).
+    call method test_dvm_no_dumps->('READ_DRAFT_PERSISTENCY').
+  endmethod.
+
+  method read_draft_persistency2.
+    create object test_dvm_no_dumps type (`CL_SVER_DVM`)
+      exporting dvm = new ltc_detval_no_dumps( ).
+    call method test_dvm_no_dumps->('READ_DRAFT_PERSISTENCY2').
+  endmethod.
+
+  method read_draft_persistency_pid.
+    create object test_dvm_no_dumps type (`CL_SVER_DVM`)
+      exporting dvm = new ltc_detval_no_dumps( ).
+    call method test_dvm_no_dumps->('READ_DRAFT_PERSISTENCY_PID').
+  endmethod.
+
+  method no_changes.
+    data(dvm) = new lcl_detval( ). "no trace needed
+    create object test_dvm type (`CL_SVER_DVM`)
+      exporting dvm = dvm.
+    set_cls( dvm = dvm  abap_behv_detval = 'T' ).
+    call method test_dvm->('TEST_SETUP').
+    cl_abap_behv_detval=>add_change_notification_tab(
+      value #( ) ).
+    call method test_dvm->('NO_CHANGES').
+    reset_cls(  ).
+  endmethod.
+
+  method det_act_no_instances.
+    create object test_dvm_no_dumps type (`CL_SVER_DVM`)
+      exporting dvm = new ltc_detval_no_dumps( lcl_detval_with_trace=>c_xtrace_verbose ).
+    call method test_dvm_no_dumps->('DET_ACT_NO_INSTANCES').
+  endmethod.
+
+  method initial_key.
+    create object test_dvm_no_dumps type (`CL_SVER_DVM`)
+      exporting dvm = new ltc_detval_no_dumps( ).
+    call method test_dvm_no_dumps->('INITIAL_KEY').
+  endmethod.
+
+  method create_and_field_on_mod.
+    create object test_dvm type (`CL_SVER_DVM`)
+      exporting dvm = new lcl_detval_with_trace( ).
+    call method test_dvm->('CREATE_AND_FIELD_ON_MOD').
+  endmethod.
+
+  method key_alignment.
+    create object test_dvm type (`CL_SVER_DVM`)
+      exporting dvm = new lcl_detval_with_trace( ).
+    call method test_dvm->('KEY_ALIGNMENT').
+  endmethod.
+
+  method key_alignment_det_act.
+    create object test_dvm type (`CL_SVER_DVM`)
+      exporting dvm = new lcl_detval_with_trace( ).
+    call method test_dvm->('KEY_ALIGNMENT_DET_ACT').
+  endmethod.
+
+  method key_alignment2_det_act.
+    create object test_dvm type (`CL_SVER_DVM`)
+      exporting dvm = new lcl_detval_with_trace( ).
+    call method test_dvm->('KEY_ALIGNMENT2_DET_ACT').
+  endmethod.
+
+  method key_alignment3_det_act_ln.
+    create object test_dvm type (`CL_SVER_DVM`)
+      exporting dvm = new lcl_detval_with_trace( ).
+    call method test_dvm->('KEY_ALIGNMENT3_DET_ACT_LN').
+  endmethod.
+
+  method dump_endless_on_mod.
+    create object test_dvm_no_dumps type (`CL_SVER_DVM`)
+      exporting dvm = new ltc_detval_no_dumps( ).
+    call method test_dvm_no_dumps->('DUMP_ENDLESS_ON_MOD').
+  endmethod.
+
+  method set_cls.
+    mode = cl_abap_behv_detval=>mode.
+    implementation = cl_abap_behv_detval=>implementation.
+    cl_abap_behv_detval=>implementation = dvm.
+    cl_abap_behv_detval=>set_flags( abap_behv_detval ).
+  endmethod.
+
+  method reset_cls.
+    cl_abap_behv_detval=>implementation = implementation.
+    cl_abap_behv_detval=>set_flags( mode ).
+  endmethod.
+
+  method det_old_reported.
+    data(dvm) = new ltc_detval_no_dumps( ).
+    create object test_dvm_no_dumps type (`CL_SVER_DVM`)
+      exporting dvm = dvm.
+    set_cls( dvm = dvm  abap_behv_detval = ' ' ).
+    call method test_dvm_no_dumps->('DET_OLD_REPORTED').
+    reset_cls( ).
+  endmethod.
+
+  method det_new_reported.
+    create object test_dvm_no_dumps type (`CL_SVER_DVM`)
+      exporting dvm = new ltc_detval_no_dumps( ).
+    call method test_dvm_no_dumps->('DET_NEW_REPORTED').
+  endmethod.
+
+  method detact_det_old.
+    create object test_dvm_no_dumps type (`CL_SVER_DVM`)
+      exporting dvm = new ltc_detval_no_dumps( ).
+    call method test_dvm_no_dumps->('DETACT_DET_OLD').
+  endmethod.
+
+  method detact_det_new.
+    create object test_dvm_no_dumps type (`CL_SVER_DVM`)
+      exporting dvm = new ltc_detval_no_dumps( ).
+    call method test_dvm_no_dumps->('DETACT_DET_NEW').
+  endmethod.
+
+  method detact_det_mixed.
+    create object test_dvm_no_dumps type (`CL_SVER_DVM`)
+      exporting dvm = new ltc_detval_no_dumps( ).
+    call method test_dvm_no_dumps->('DETACT_DET_MIXED').
+  endmethod.
+
+  method val_mixed_rep_failed.
+    create object test_dvm_no_dumps type (`CL_SVER_DVM`)
+      exporting dvm = new ltc_detval_no_dumps( ).
+    call method test_dvm_no_dumps->('VAL_MIXED_REP_FAILED').
+  endmethod.
+
+  method det_mod_mixed_reported.
+    create object test_dvm_no_dumps type (`CL_SVER_DVM`)
+      exporting dvm = new ltc_detval_no_dumps( ).
+    call method test_dvm_no_dumps->('DET_MOD_MIXED_REPORTED').
+  endmethod.
+
+  method add_notifications.
+    data(dvm) = new ltc_add_notifications( ).
+    create object test_dvm_no_dumps type (`CL_SVER_DVM`)
+      exporting dvm = dvm.
+    set_cls( dvm = dvm abap_behv_detval = ' ' ).
+    call method test_dvm_no_dumps->('ADD_NOTIFICATIONS').
+    reset_cls( ).
+  endmethod.
+
+  method add_notifications_readonly.
+    data(dvm) = new ltc_add_notifications( ).
+    create object test_dvm_no_dumps type (`CL_SVER_DVM`)
+      exporting dvm = dvm.
+"    call method test_dvm_no_dumps->('ADD_NOTIFICATIONS_READONLY').
+  endmethod.
+
+  method unmanaged_core_det.
+    create object test_dvm_no_dumps type (`CL_SVER_DVM`)
+      exporting dvm = new ltc_detval_no_dumps( ).
+    call method test_dvm_no_dumps->('UNMANAGED_CORE_DET').
+  endmethod.
+
+"  method det_on_save_twice.
+"    create object test_dvm_no_dumps type (`CL_SVER_DVM`)
+"      exporting dvm = new ltc_detval_no_dumps( ).
+"    call method test_dvm_no_dumps->('DET_ON_SAVE_TWICE').
+"  endmethod.
+
+  method save_opt1.
+    data(dvm) = new ltc_detval_no_dumps( ).
+    dvm->is_optimization1_active = abap_true.
+    create object test_dvm_no_dumps type (`CL_SVER_DVM`)
+      exporting dvm = dvm.
+    set_cls( dvm = dvm  abap_behv_detval = '1' ).
+    call method test_dvm_no_dumps->('SAVE_OPT1').
+    reset_cls( ).
+  endmethod.
+
+  method save_no_opt1.
+    data(dvm) = new ltc_detval_no_dumps( ).
+    dvm->is_optimization1_active = abap_false.
+    create object test_dvm_no_dumps type (`CL_SVER_DVM`)
+      exporting dvm = dvm.
+    call method test_dvm_no_dumps->('SAVE_NO_OPT1').
+  endmethod.
+
+  method read_control_flags.
+    create object test_dvm_no_dumps type (`CL_SVER_DVM`)
+      exporting dvm = new ltc_detval_no_dumps( ).
+    call method test_dvm_no_dumps->('READ_CONTROL_FLAGS').
+  endmethod.
+
+  method read_control_flags_bsp.
+    create object test_dvm_no_dumps type (`CL_SVER_DVM`)
+      exporting dvm = new ltc_detval_no_dumps( ).
+    call method test_dvm_no_dumps->('READ_CONTROL_FLAGS_BSP').
+  endmethod.
+
+  method empty_notification.
+    create object test_dvm_no_dumps type (`CL_SVER_DVM`)
+      exporting dvm = new ltc_detval_no_dumps( ).
+    call method test_dvm_no_dumps->('EMPTY_NOTIFICATION').
+  endmethod.
+
+endclass.
+
+*class ltc_detval definition inheriting from lcl_detval "tests without trace
+*    final for testing duration long risk level harmless.
+*  public section.
+*    methods test_exec for testing.
+*endclass.
+*
+*class ltc_detval implementation.
+*  method test_exec.
+*    "reduced test to on modify determinations when lcl_buffer was introduced
+*    data instance_tab type table for %_notifications scibehv_m_dbdev.
+*    instance_tab = value #(
+*      ( %tky-devClass = 'ABC1' %control-chgdBy = if_abap_behv=>mk-on )
+*      ( %tky-devClass = 'ABC2' %control-dlvUnit = if_abap_behv=>mk-on ) ).
+*    data(dvm) = me.
+*    dvm->add_change_notification_tab(
+*      value #( ( entity_name = 'SCIBEHV_M_DBDEV'
+*                 operation = if_abap_behv=>op-m-update
+*                 instances = ref #( instance_tab ) ) ) ).
+*    cl_aunit_assert=>assert_equals( act = lines( dvm->pending_det_on_mod_instances )
+*                                    exp = 1
+*                                    msg = 'Unexpeced number of pending instances' ).
+*    dvm->exec_determinations_on_modify( exporting root_entity_name = 'SCIBEHV_M_DBDEV' ).
+*
+*    cl_aunit_assert=>assert_equals( act = lines( dvm->pending_det_on_mod_instances )
+*                                    exp = 0
+*                                    msg = 'Unexpeced number of pending instances' ).
+*  endmethod.
+*endclass.
+
+class ltc_bo_trees definition
+  final for testing duration short risk level harmless.
+  public section.
+    methods test_get_parent_info for testing.
+    methods test_get_parent_of_root for testing.
+endclass.
+
+class ltc_bo_trees implementation.
+  method test_get_parent_info.
+    try.
+      new lcl_bo_trees( )->get_parent_info( 'MICH_GIBT_ES_NICHT' ).
+    catch lcx_cds_metadata_missing into data(lcx) ##NO_HANDLER.
+    endtry.
+    cl_aunit_assert=>assert_not_initial( act = lcx msg = 'Expected exception was not raised' ).
+  endmethod.
+  method test_get_parent_of_root.
+    try.
+      new lcl_bo_trees( )->get_parent_info( exporting entity_name        = 'SCIBEHV_M_DBDEV'
+                                            importing parent_name        = data(pn)
+                                                      to_child_asso_name = data(ch) ).
+    catch lcx_cds_metadata_missing into data(lcx) ##NO_HANDLER.
+    endtry.
+    cl_aunit_assert=>assert_initial( act = lcx msg = 'Expected exception was raised' ).
+    cl_aunit_assert=>assert_initial( act = pn  msg = 'Unexpected parent name' ).
+    cl_aunit_assert=>assert_initial( act = ch  msg = 'Unexpected to_child_asso_name' ).
+  endmethod.
+endclass.
+
+class ltc_feature_toggle_off  definition final for testing
+    duration short risk level harmless.
+  public section.
+    methods save_opt1 for testing.
+    class-data test_dvm_no_dumps type ref to object.
+  private section.
+    class-methods class_setup.
+endclass.
+
+class ltc_feature_toggle_off implementation.
+  method class_setup.
+    cl_abap_switch=>set_switch_states_for_tests( p_temp_states = value #( ( switch_id = 'IC_2311_DET_ACT_OPT' state = cl_abap_switch=>c_off ) )  ).
+    try.
+      create object test_dvm_no_dumps type (`CL_SVER_DVM`)
+        exporting dvm = new ltc_detval_no_dumps( ).
+    catch cx_sy_create_object_error.
+      cl_aunit_assert=>abort( msg = `Need HOME objects for execution` ).
+    endtry.
+  endmethod.
+  method save_opt1.
+    call method test_dvm_no_dumps->('SAVE_OPT1').
+  endmethod.
+endclass.
+
+class ltc_feature_toggle_on  definition final for testing
+    duration short risk level harmless.
+  public section.
+    methods save_no_opt1 for testing.
+    class-data test_dvm_no_dumps type ref to object.
+  private section.
+    class-methods class_setup.
+endclass.
+
+class ltc_feature_toggle_on implementation.
+  method class_setup.
+    cl_abap_switch=>set_switch_states_for_tests( p_temp_states = value #( ( switch_id = 'IC_2311_DET_ACT_OPT' state = cl_abap_switch=>c_on ) )  ).
+    try.
+      create object test_dvm_no_dumps type (`CL_SVER_DVM`)
+        exporting dvm = new ltc_detval_no_dumps( ).
+    catch cx_sy_create_object_error.
+      cl_aunit_assert=>abort( msg = `Need HOME objects for execution` ).
+    endtry.
+  endmethod.
+  method save_no_opt1.
+    call method test_dvm_no_dumps->('SAVE_NO_OPT1').
+  endmethod.
+endclass.

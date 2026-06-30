@@ -1,0 +1,18 @@
+@EndUserText.label : 'Spacefarers Table'
+@AbapCatalog.enhancement.category : #NOT_EXTENSIBLE
+@AbapCatalog.tableCategory : #TRANSPARENT
+@AbapCatalog.deliveryClass : #A
+@AbapCatalog.dataMaintenance : #RESTRICTED
+define table zgk0612_t_spacef {
+
+  key id              : uuid not null;
+  spacef_name         : abap.char(100);
+  stardust_collection : abap.int2;
+  wormhole_skill      : abap.int2;
+  reputation          : abap.int2;
+  origin_planet       : abap.char(50);
+  suit_color          : abap.char(30);
+  @AbapCatalog.decfloat.outputStyle : #NORMAL
+  credits             : abap.decfloat16;
+
+}

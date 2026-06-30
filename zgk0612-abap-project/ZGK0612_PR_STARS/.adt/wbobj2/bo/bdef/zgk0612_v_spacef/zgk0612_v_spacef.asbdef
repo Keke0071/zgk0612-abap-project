@@ -1,0 +1,16 @@
+managed implementation in class zbp_gk0612_v_spacef unique;
+strict ( 2 );
+
+define behavior for ZGK0612_V_SPACEF alias Spacefarer
+persistent table zgk0612_t_spacef
+lock master
+authorization master ( instance )
+//etag master <field_name>
+{
+  create ( authorization : global, precheck );
+  update ( precheck );
+  delete;
+
+  validation check_dust_collection on save
+  { delete; }
+}
